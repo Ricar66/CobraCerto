@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (for VPS deployment)
+  postgres:
+    image: postgres:16-alpine
+    container_name: cobracerto_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cobracerto
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme123}
+      POSTGRES_DB: cobracerto
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cobracerto"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cobracerto_app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://cobracerto:${DB_PASSWORD:-changeme123}@postgres:5432/cobracerto
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      JOB_TOKEN: ${JOB_TOKEN}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  postgres_data:

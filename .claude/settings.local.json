@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(findstr:*)",
+      "Bash(ren \"app\\\\\\(app\\)\\\\dashboard\\\\page.tsx\" \"page-original.tsx\")",
+      "Bash(ren \"app\\\\\\(app\\)\\\\dashboard\\\\page-demo.tsx\" \"page.tsx\")",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
