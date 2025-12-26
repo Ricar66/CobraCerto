@@ -79,8 +79,9 @@ export default function ClientsPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Nome *</label>
+                <label htmlFor="client-name" className="block text-sm font-medium text-gray-700">Nome *</label>
                 <input
+                  id="client-name"
                   type="text"
                   required
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
@@ -89,8 +90,9 @@ export default function ClientsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email *</label>
+                <label htmlFor="client-email" className="block text-sm font-medium text-gray-700">Email *</label>
                 <input
+                  id="client-email"
                   type="email"
                   required
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
@@ -99,8 +101,9 @@ export default function ClientsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Telefone</label>
+                <label htmlFor="client-phone" className="block text-sm font-medium text-gray-700">Telefone</label>
                 <input
+                  id="client-phone"
                   type="text"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                   value={formData.phone}
@@ -108,8 +111,9 @@ export default function ClientsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">CPF/CNPJ</label>
+                <label htmlFor="client-document" className="block text-sm font-medium text-gray-700">CPF/CNPJ</label>
                 <input
+                  id="client-document"
                   type="text"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                   value={formData.document}
@@ -118,8 +122,9 @@ export default function ClientsPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Endereço</label>
+              <label htmlFor="client-address" className="block text-sm font-medium text-gray-700">Endereço</label>
               <input
+                id="client-address"
                 type="text"
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 value={formData.address}
@@ -127,8 +132,9 @@ export default function ClientsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Observações</label>
+              <label htmlFor="client-notes" className="block text-sm font-medium text-gray-700">Observações</label>
               <textarea
+                id="client-notes"
                 rows={3}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 value={formData.notes}

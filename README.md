@@ -40,6 +40,36 @@ Sistema SaaS de Cobrança e Inadimplência para pequenos negócios (prestadores,
 - Fila de envio com retry automático
 - Histórico completo de contatos registrado
 
+### Campos Personalizados
+- Sistema EAV flexível para customizar Clientes e Cobranças
+- 6 tipos de campo: TEXT, NUMBER, DATE, BOOLEAN, SELECT, MULTISELECT
+- Configuração por ADMIN, uso por MANAGER
+- Adapta-se a qualquer nicho: consultoria, academia, e-commerce, etc.
+- [📖 Documentação completa](./docs/CUSTOM_FIELDS.md)
+
+### Tags e Categorias
+- Sistema de etiquetagem para Clientes e Cobranças
+- Cores personalizáveis para organização visual
+- Filtros rápidos por tag
+- Multi-tenant com controle de acesso
+
+### Importação CSV Guiada
+- Wizard em 3 etapas: Upload → Mapeamento → Preview
+- Mapeamento inteligente de colunas
+- Validação completa com relatório de erros
+- Suporte para Clientes e Cobranças
+- Idempotência para evitar duplicação
+- [📖 Documentação completa](./docs/CSV_IMPORT.md)
+- [📁 Exemplos CSV](./docs/csv-examples/)
+
+### Relatórios de Aging
+- Análise de envelhecimento de contas a receber
+- 6 buckets padrão: 0-7, 8-15, 16-30, 31-60, 61-90, 90+ dias
+- Visão por cliente e agregada
+- Gráficos e exportação (CSV/PDF)
+- Ideal para gestão de cobrança e projeção de fluxo de caixa
+- [📖 Documentação completa](./docs/AGING_REPORTS.md)
+
 ### Planos do SaaS
 - **Starter**: Até 200 cobranças/mês, 1 usuário, lembretes básicos
 - **Pro**: Até 1.000 cobranças/mês, até 3 usuários, regras configuráveis
@@ -66,21 +96,34 @@ CobraCerto/
 │   │   ├── dashboard/
 │   │   ├── clients/
 │   │   ├── invoices/
+│   │   ├── imports/          # CSV Import wizard
+│   │   ├── reports/          # Aging and other reports
 │   │   └── settings/
+│   │       ├── custom-fields/  # Custom field definitions
+│   │       └── tags/           # Tag management
 │   ├── (marketing)/
 │   │   └── pricing/
 │   ├── api/
 │   │   ├── auth/
 │   │   ├── clients/
 │   │   ├── invoices/
+│   │   ├── imports/          # Import API endpoints
+│   │   ├── reports/          # Report API endpoints
+│   │   ├── settings/         # Settings API endpoints
 │   │   └── jobs/
 │   ├── globals.css
 │   └── layout.tsx
 ├── components/
+├── docs/
+│   ├── csv-examples/         # Example CSV files
+│   ├── CUSTOM_FIELDS.md      # Custom fields documentation
+│   ├── CSV_IMPORT.md         # CSV import documentation
+│   └── AGING_REPORTS.md      # Aging reports documentation
 ├── lib/
 │   ├── auth.ts
 │   ├── db.ts
 │   ├── email.ts
+│   ├── email-templates.ts    # Email templates for reminders
 │   ├── rbac.ts
 │   └── tenant.ts
 ├── prisma/
@@ -138,6 +181,28 @@ openssl rand -base64 32
 ```
 
 4. **Configure o banco de dados**
+
+**📖 [Guia Completo de Configuração do Banco](./docs/DATABASE_SETUP.md)**
+
+Opções rápidas:
+
+**MySQL Local (XAMPP):**
+```env
+DATABASE_URL="mysql://root:@localhost:3306/cobracerto"
+```
+
+**MySQL Hostinger:**
+```env
+DATABASE_URL="mysql://cobracerto_user:SENHA@mysql.hostinger.com:3306/cobracerto_db"
+```
+
+**PostgreSQL (Docker):**
+```env
+DATABASE_URL="postgresql://cobracerto:SENHA@localhost:5432/cobracerto"
+```
+
+Após configurar o `.env`, execute:
+
 ```bash
 # Gerar o Prisma Client
 npx prisma generate
@@ -499,6 +564,12 @@ Para produção, considere:
 - **InvoiceEvent**: Histórico de eventos das faturas
 - **ReminderRule**: Regras de lembrete configuráveis
 - **EmailOutbox**: Fila de e-mails para envio
+- **CustomFieldDefinition**: Definição de campos personalizados
+- **CustomFieldValue**: Valores dos campos personalizados (EAV)
+- **Tag**: Tags/categorias para organização
+- **ClientTag / InvoiceTag**: Relacionamentos de tags
+- **ImportJob**: Jobs de importação CSV
+- **ImportRowError**: Erros de importação por linha
 
 ## API Endpoints
 
@@ -520,6 +591,24 @@ Para produção, considere:
 - `PATCH /api/invoices/[id]` - Atualizar fatura
 - `POST /api/invoices/[id]/mark-paid` - Marcar como paga
 - `GET /api/invoices/export` - Exportar CSV
+
+### Configurações (Settings)
+- `GET /api/settings/custom-fields` - Listar definições de campos personalizados
+- `POST /api/settings/custom-fields` - Criar campo personalizado (ADMIN only)
+- `PATCH /api/settings/custom-fields/[id]` - Atualizar campo (ADMIN only)
+- `DELETE /api/settings/custom-fields/[id]` - Deletar campo (ADMIN only)
+- `GET /api/settings/tags` - Listar tags
+- `POST /api/settings/tags` - Criar tag
+- `PATCH /api/settings/tags/[id]` - Atualizar tag
+- `DELETE /api/settings/tags/[id]` - Deletar tag
+
+### Importações
+- `POST /api/imports/prepare` - Upload e mapeamento de CSV
+- `POST /api/imports/[id]/commit` - Confirmar importação
+- `GET /api/imports/[id]/errors.csv` - Baixar relatório de erros
+
+### Relatórios
+- `GET /api/reports/aging` - Relatório de aging (envelhecimento)
 
 ### Jobs
 - `POST /api/jobs/run-reminders` - Executar job de lembretes (protegido por JOB_TOKEN)

@@ -1,0 +1,6 @@
+Email do Cliente,Descrição,Valor,Vencimento,Status,Observações
+joao@email.com,Mensalidade Janeiro 2026,150.00,10/01/2026,PENDING,Pagamento recorrente
+maria@empresa.com.br,Serviço de Consultoria,2500.00,15/01/2026,PENDING,Projeto Alpha - Fase 1
+pedro@email.com,Mensalidade Fevereiro 2026,150.00,10/02/2026,PENDING,
+ana@loja.com.br,Fornecimento de Materiais,5000.00,20/01/2026,PENDING,Desconto aplicado
+carlos@email.com,Mensalidade Março 2026,150.00,10/03/2026,PENDING,Novo contrato

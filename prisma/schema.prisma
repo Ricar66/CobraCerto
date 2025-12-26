@@ -12,19 +12,23 @@ datasource db {
 
 // Tenant (Company/Organization using the SaaS)
 model Tenant {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   name      String
-  email     String   @unique
+  email     String     @unique
   phone     String?
   plan      TenantPlan @default(STARTER)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  users         User[]
-  clients       Client[]
-  invoices      Invoice[]
-  reminderRules ReminderRule[]
+  users             User[]
+  clients           Client[]
+  invoices          Invoice[]
+  reminderRules     ReminderRule[]
+  customFieldDefs   CustomFieldDefinition[]
+  customFieldValues CustomFieldValue[]
+  tags              Tag[]
+  importJobs        ImportJob[]
 
   @@index([email])
   @@map("tenants")
@@ -48,7 +52,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  importJobs ImportJob[]
 
   @@index([tenantId])
   @@index([email])
@@ -66,7 +71,7 @@ model Client {
   name      String
   email     String
   phone     String?
-  document  String?  // CPF/CNPJ
+  document  String? // CPF/CNPJ
   address   String?  @db.Text
   notes     String?  @db.Text
   active    Boolean  @default(true)
@@ -74,8 +79,9 @@ model Client {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  invoices Invoice[]
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoices   Invoice[]
+  clientTags ClientTag[]
 
   @@index([tenantId])
   @@index([email])
@@ -95,22 +101,24 @@ model Invoice {
   notes       String?       @db.Text
 
   // Recurrence fields
-  recurrence  Recurrence    @default(NONE)
-  nextRunAt   DateTime?
-  parentId    String?       // Original invoice if this was auto-generated
+  recurrence Recurrence @default(NONE)
+  nextRunAt  DateTime?
+  parentId   String? // Original invoice if this was auto-generated
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  client  Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  tenant  Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  events  InvoiceEvent[]
+  client      Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  events      InvoiceEvent[]
+  invoiceTags InvoiceTag[]
 
   @@index([tenantId])
   @@index([clientId])
   @@index([status])
   @@index([dueDate])
   @@index([nextRunAt])
+  @@index([tenantId, status, dueDate])
   @@map("invoices")
 }
 
@@ -156,16 +164,16 @@ enum EventType {
 
 // Reminder Rules (configurable per tenant)
 model ReminderRule {
-  id          String   @id @default(cuid())
-  tenantId    String
-  name        String
-  daysBefore  Int?     // Days before due date (3, 1, 0)
-  daysAfter   Int?     // Days after due date (3, 7, 15)
-  active      Boolean  @default(true)
-  emailSubject String  @db.Text
-  emailBody    String  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  tenantId     String
+  name         String
+  daysBefore   Int? // Days before due date (3, 1, 0)
+  daysAfter    Int? // Days after due date (3, 7, 15)
+  active       Boolean  @default(true)
+  emailSubject String   @db.Text
+  emailBody    String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -196,4 +204,193 @@ enum EmailStatus {
   QUEUED
   SENT
   FAILED
+}
+
+// ============================================
+// CUSTOM FIELDS
+// ============================================
+
+// Custom Field Definition (configured by ADMIN)
+model CustomFieldDefinition {
+  id         String            @id @default(cuid())
+  tenantId   String
+  key        String // Unique identifier for API/code (e.g., "company_size")
+  label      String // Display name (e.g., "Tamanho da Empresa")
+  entityType CustomFieldEntity // CLIENT or INVOICE
+  type       CustomFieldType
+  required   Boolean           @default(false)
+  options    String?           @db.Text // JSON array for SELECT/MULTISELECT: ["Pequena", "Média", "Grande"]
+  isActive   Boolean           @default(true)
+  sortOrder  Int               @default(0)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  tenant Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  values CustomFieldValue[]
+
+  @@unique([tenantId, entityType, key])
+  @@index([tenantId])
+  @@index([tenantId, entityType])
+  @@map("custom_field_definitions")
+}
+
+enum CustomFieldEntity {
+  CLIENT
+  INVOICE
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  SELECT
+  MULTISELECT
+}
+
+// Custom Field Value (EAV pattern - stores actual values)
+model CustomFieldValue {
+  id         String            @id @default(cuid())
+  tenantId   String
+  entityId   String // ID of Client or Invoice
+  entityType CustomFieldEntity
+  fieldId    String // Reference to CustomFieldDefinition
+
+  // Typed storage columns (only one will be used based on field type)
+  valueString String?   @db.Text
+  valueNumber Decimal?  @db.Decimal(15, 4)
+  valueDate   DateTime?
+  valueBool   Boolean?
+  valueJson   String?   @db.Text // For MULTISELECT (JSON array)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  field  CustomFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([entityId, fieldId])
+  @@index([tenantId])
+  @@index([tenantId, entityType])
+  @@index([entityId])
+  @@index([fieldId])
+  @@map("custom_field_values")
+}
+
+// ============================================
+// TAGS & CATEGORIES
+// ============================================
+
+// Tag (can be applied to Clients or Invoices)
+model Tag {
+  id         String    @id @default(cuid())
+  tenantId   String
+  name       String
+  color      String    @default("#3B82F6") // Hex color for UI
+  entityType TagEntity // CLIENT or INVOICE
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  clientTags  ClientTag[]
+  invoiceTags InvoiceTag[]
+
+  @@unique([tenantId, entityType, name])
+  @@index([tenantId])
+  @@index([tenantId, entityType])
+  @@map("tags")
+}
+
+enum TagEntity {
+  CLIENT
+  INVOICE
+}
+
+// ClientTag (many-to-many relationship)
+model ClientTag {
+  clientId  String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([clientId, tagId])
+  @@index([clientId])
+  @@index([tagId])
+  @@map("client_tags")
+}
+
+// InvoiceTag (many-to-many relationship)
+model InvoiceTag {
+  invoiceId String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([invoiceId, tagId])
+  @@index([invoiceId])
+  @@index([tagId])
+  @@map("invoice_tags")
+}
+
+// ============================================
+// CSV IMPORT
+// ============================================
+
+// Import Job (tracks CSV import process)
+model ImportJob {
+  id              String       @id @default(cuid())
+  tenantId        String
+  type            ImportType // CLIENT or INVOICE
+  status          ImportStatus @default(PROCESSING)
+  filename        String
+  totalRows       Int          @default(0)
+  successRows     Int          @default(0)
+  errorRows       Int          @default(0)
+  columnMapping   String       @db.Text // JSON: {"Nome": "name", "E-mail": "email"}
+  rawDataPreview  String?      @db.Text // JSON: first 5 rows for preview
+  createdByUserId String
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User             @relation(fields: [createdByUserId], references: [id])
+  errors ImportRowError[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([createdByUserId])
+  @@map("import_jobs")
+}
+
+enum ImportType {
+  CLIENT
+  INVOICE
+}
+
+enum ImportStatus {
+  PROCESSING
+  PREVIEW
+  COMPLETED
+  FAILED
+}
+
+// Import Row Error (validation errors for specific rows)
+model ImportRowError {
+  id          String   @id @default(cuid())
+  jobId       String
+  rowNumber   Int
+  message     String   @db.Text
+  rawDataJson String   @db.Text // Original row data as JSON
+  createdAt   DateTime @default(now())
+
+  job ImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("import_row_errors")
 }

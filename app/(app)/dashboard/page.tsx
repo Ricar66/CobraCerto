@@ -76,12 +76,12 @@ export default function DashboardPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-1">
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <div className="text-sm font-medium text-gray-500 truncate">
                   Total a Receber
-                </dt>
-                <dd className="mt-1 text-3xl font-semibold text-gray-900">
+                </div>
+                <div className="mt-1 text-3xl font-semibold text-gray-900">
                   R$ {stats.totalReceivable.toFixed(2)}
-                </dd>
+                </div>
               </div>
             </div>
           </div>
@@ -91,12 +91,12 @@ export default function DashboardPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-1">
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <div className="text-sm font-medium text-gray-500 truncate">
                   Vencendo em 7 dias
-                </dt>
-                <dd className="mt-1 text-3xl font-semibold text-yellow-600">
+                </div>
+                <div className="mt-1 text-3xl font-semibold text-yellow-600">
                   {stats.dueIn7Days.length}
-                </dd>
+                </div>
               </div>
             </div>
           </div>
@@ -106,12 +106,12 @@ export default function DashboardPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-1">
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <div className="text-sm font-medium text-gray-500 truncate">
                   Atrasadas
-                </dt>
-                <dd className="mt-1 text-3xl font-semibold text-red-600">
+                </div>
+                <div className="mt-1 text-3xl font-semibold text-red-600">
                   {stats.overdue.length}
-                </dd>
+                </div>
               </div>
             </div>
           </div>
@@ -121,12 +121,12 @@ export default function DashboardPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-1">
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <div className="text-sm font-medium text-gray-500 truncate">
                   Recebido no Mês
-                </dt>
-                <dd className="mt-1 text-3xl font-semibold text-green-600">
+                </div>
+                <div className="mt-1 text-3xl font-semibold text-green-600">
                   R$ {stats.receivedThisMonth.toFixed(2)}
-                </dd>
+                </div>
               </div>
             </div>
           </div>
